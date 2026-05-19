@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Case {
+  id               String   @id @default(cuid())
+  title            String
+  customerName     String?
+  customerEmail    String?
+  rawInput         String
+  inputType        String   @default("TEXT")
+  status           String   @default("NEW")
+  requestType      String?
+  priority         String?
+  confidence       Float?
+  needsHumanReview Boolean  @default(false)
+  assignedTeam     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  analysis CaseAnalysis?
+  tasks    Task[]
+  activity ActivityLog[]
+  actions  MockIntegrationAction[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([requestType])
+  @@index([createdAt])
+}
+
+model CaseAnalysis {
+  id                   String   @id @default(cuid())
+  caseId               String   @unique
+  case                 Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  summary              String
+  classificationReason String
+  extractedData        String
+  riskFlags            String
+  recommendedActions   String
+  draftResponse        String
+  internalNotes        String?
+  createdAt            DateTime @default(now())
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      String    @default("TODO")
+  ownerTeam   String?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([caseId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  eventType String
+  message   String
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([caseId, createdAt])
+}
+
+model MockIntegrationAction {
+  id         String   @id @default(cuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actionType String
+  payload    String
+  status     String   @default("PENDING")
+  reason     String?
+  toolName   String?
+  createdAt  DateTime @default(now())
+
+  @@index([caseId])
+}
