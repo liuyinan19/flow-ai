@@ -91,7 +91,7 @@ export function SidebarNav() {
   }, [activeIndex, prevIndex, scale]);
 
   return (
-    <aside className="hidden md:flex md:w-[72px] lg:w-[84px] shrink-0 flex-col items-center justify-between py-6">
+    <aside className="hidden md:flex md:w-[72px] lg:w-[84px] shrink-0 flex-col items-center gap-3 py-6">
       <Link
         href="/"
         aria-label="AI Operations Agent — home"
@@ -114,7 +114,7 @@ export function SidebarNav() {
         </div>
       </LayoutGroup>
 
-      <ThemeToggle />
+      <ThemeToggle className="mt-auto" />
     </aside>
   );
 }
