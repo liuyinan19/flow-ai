@@ -1,10 +1,18 @@
-import { Calendar, DollarSign, ListTree, Mail, Tag, UserCircle2, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  DollarSign,
+  ListTree,
+  Mail,
+  Tag,
+  UserCircle2,
+} from "lucide-react";
 import type { ExtractedData } from "@/lib/types";
 
 export function CaseExtracted({ data }: { data: ExtractedData | null }) {
   if (!data) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-body-sm text-[rgba(var(--text)/0.6)]">
         No extracted data yet — analyze the case first.
       </p>
     );
@@ -12,7 +20,7 @@ export function CaseExtracted({ data }: { data: ExtractedData | null }) {
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       <Block title="Customer intent" icon={<Tag className="h-4 w-4" />}>
-        <p className="text-sm">{data.customerIntent || "—"}</p>
+        <p className="text-body-sm">{data.customerIntent || "—"}</p>
       </Block>
       <Block title="Key facts" icon={<ListTree className="h-4 w-4" />}>
         <List items={data.keyFacts} />
@@ -31,7 +39,7 @@ export function CaseExtracted({ data }: { data: ExtractedData | null }) {
       </Block>
       <Block
         title="Missing information"
-        icon={<AlertCircle className="h-4 w-4 text-amber-500" />}
+        icon={<AlertCircle className="h-4 w-4 text-[rgb(var(--accent2))]" />}
         className="lg:col-span-2"
       >
         <List items={data.missingInformation} tone="warning" />
@@ -52,8 +60,8 @@ function Block({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-border bg-card p-4 ${className ?? ""}`}>
-      <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+    <div className={`card-glass grain p-4 sm:p-5 ${className ?? ""}`}>
+      <div className="mb-2 flex items-center gap-2 text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
         {icon}
         <span>{title}</span>
       </div>
@@ -70,20 +78,18 @@ function List({
   tone?: "default" | "warning";
 }) {
   if (!items || items.length === 0) {
-    return <p className="text-xs text-muted-foreground">—</p>;
+    return <p className="text-caption text-[rgba(var(--text)/0.55)]">—</p>;
   }
   return (
-    <ul className="space-y-1.5 text-sm">
+    <ul className="space-y-1.5 text-body-sm">
       {items.map((it, i) => (
         <li
           key={i}
           className={`flex items-start gap-2 ${
-            tone === "warning"
-              ? "text-amber-700 dark:text-amber-300"
-              : ""
+            tone === "warning" ? "text-[rgb(var(--accent2-deep))]" : ""
           }`}
         >
-          <span className="mt-1.5 inline-block h-1 w-1 rounded-full bg-current opacity-60" />
+          <span className="mt-1.5 inline-block h-1 w-1 rounded-full bg-current opacity-70" />
           <span>{it}</span>
         </li>
       ))}
@@ -94,16 +100,16 @@ function List({
 function KeyValue({ obj }: { obj: Record<string, string> }) {
   const entries = Object.entries(obj ?? {});
   if (entries.length === 0) {
-    return <p className="text-xs text-muted-foreground">—</p>;
+    return <p className="text-caption text-[rgba(var(--text)/0.55)]">—</p>;
   }
   return (
-    <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1.5 text-sm">
+    <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1.5 text-body-sm">
       {entries.map(([k, v]) => (
         <div key={k} className="contents">
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+          <dt className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
             {k}
           </dt>
-          <dd className="text-sm">{v}</dd>
+          <dd>{v}</dd>
         </div>
       ))}
     </dl>

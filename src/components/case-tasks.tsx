@@ -28,9 +28,9 @@ const ICONS: Record<TaskStatus, React.ElementType> = {
 };
 
 const TONES: Record<TaskStatus, string> = {
-  TODO: "text-muted-foreground",
-  IN_PROGRESS: "text-amber-600 dark:text-amber-400",
-  DONE: "text-emerald-600 dark:text-emerald-400",
+  TODO: "text-[rgba(var(--text)/0.5)]",
+  IN_PROGRESS: "text-[rgb(var(--accent2))]",
+  DONE: "text-[rgb(var(--green))]",
 };
 
 export function CaseTasks({
@@ -45,7 +45,7 @@ export function CaseTasks({
 
   if (tasks.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-body-sm text-[rgba(var(--text)/0.6)]">
         No tasks yet — they appear here after the AI generates a checklist.
       </p>
     );
@@ -74,12 +74,13 @@ export function CaseTasks({
         return (
           <li
             key={t.id}
-            className="flex items-start gap-3 rounded-lg border border-border bg-card p-3"
+            className="flex items-start gap-3 rounded-2xl border border-[rgba(var(--text)/0.06)] bg-[rgba(var(--text)/0.03)] p-3 transition-colors hover:bg-[rgba(var(--text)/0.05)]"
           >
             <button
+              type="button"
               onClick={() => advance(t)}
               className={cn(
-                "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full hover:opacity-80",
+                "focus-ring pressable mt-0.5 inline-grid h-6 w-6 place-items-center rounded-full hover:opacity-80",
                 TONES[status],
               )}
               aria-label={`Mark task as ${NEXT[status].toLowerCase().replace("_", " ")}`}
@@ -90,20 +91,21 @@ export function CaseTasks({
               <div className="flex items-center justify-between gap-2">
                 <p
                   className={cn(
-                    "text-sm font-medium",
-                    status === "DONE" && "text-muted-foreground line-through",
+                    "text-body-sm font-medium",
+                    status === "DONE" &&
+                      "text-[rgba(var(--text)/0.55)] line-through",
                   )}
                 >
                   {t.title}
                 </p>
                 {t.ownerTeam ? (
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <span className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
                     {t.ownerTeam}
                   </span>
                 ) : null}
               </div>
               {t.description ? (
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-caption text-[rgba(var(--text)/0.65)]">
                   {t.description}
                 </p>
               ) : null}

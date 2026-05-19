@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +19,7 @@ import {
   type Priority,
   type RequestType,
 } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface Props {
   caseId: string;
@@ -27,6 +27,9 @@ interface Props {
   priority: string | null;
   assignedTeam: string | null;
 }
+
+const FIELD_CLASS =
+  "h-10 rounded-xl border-[rgba(var(--text)/0.1)] bg-[rgba(var(--text)/0.04)] focus-ring";
 
 export function CaseMetadataEditor({
   caseId,
@@ -73,11 +76,13 @@ export function CaseMetadataEditor({
   };
 
   return (
-    <div className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-3">
+    <div className="card-glass grain grid gap-3 p-4 sm:grid-cols-3 sm:p-5">
       <div className="space-y-1.5">
-        <Label className="text-xs">Request type</Label>
+        <Label className="text-caption font-medium text-[rgba(var(--text)/0.7)]">
+          Request type
+        </Label>
         <Select value={t || undefined} onValueChange={(v) => setT(v as RequestType)}>
-          <SelectTrigger>
+          <SelectTrigger className={FIELD_CLASS}>
             <SelectValue placeholder="—" />
           </SelectTrigger>
           <SelectContent>
@@ -90,9 +95,11 @@ export function CaseMetadataEditor({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label className="text-xs">Priority</Label>
+        <Label className="text-caption font-medium text-[rgba(var(--text)/0.7)]">
+          Priority
+        </Label>
         <Select value={p || undefined} onValueChange={(v) => setP(v as Priority)}>
-          <SelectTrigger>
+          <SelectTrigger className={FIELD_CLASS}>
             <SelectValue placeholder="—" />
           </SelectTrigger>
           <SelectContent>
@@ -105,19 +112,25 @@ export function CaseMetadataEditor({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label className="text-xs">Assigned team</Label>
+        <Label className="text-caption font-medium text-[rgba(var(--text)/0.7)]">
+          Assigned team
+        </Label>
         <Input
           value={team}
           onChange={(e) => setTeam(e.target.value)}
           placeholder="e.g. Billing"
+          className={FIELD_CLASS}
         />
       </div>
       <div className="sm:col-span-3 flex items-center justify-end">
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={!dirty || saving}
+        <button
+          type="button"
           onClick={save}
+          disabled={!dirty || saving}
+          className={cn(
+            "focus-ring pressable inline-flex h-9 items-center gap-1.5 rounded-full border border-[rgba(var(--text)/0.12)] bg-[rgba(var(--text)/0.04)] px-4 text-caption font-medium hover:bg-[rgba(var(--text)/0.08)]",
+            (!dirty || saving) && "cursor-not-allowed opacity-50",
+          )}
         >
           {saving ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -125,7 +138,7 @@ export function CaseMetadataEditor({
             <Save className="h-3.5 w-3.5" />
           )}
           Save changes
-        </Button>
+        </button>
       </div>
     </div>
   );

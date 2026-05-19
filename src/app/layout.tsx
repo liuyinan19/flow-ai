@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SiteNav } from "@/components/site-nav";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -17,8 +18,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Operations Agent",
   description:
-    "Turn messy business requests into structured actions, tasks, and draft responses.",
+    "Turn messy business requests into structured actions, tasks, and draft responses — with humans in the loop on every risky case.",
 };
+
+// Avoids a flash of light theme on first paint by reading localStorage before hydration.
+const setInitialTheme = `
+(function() {
+  try {
+    var stored = localStorage.getItem('theme');
+    var theme = stored === 'light' || stored === 'dark' ? stored : 'dark';
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+  } catch (e) {}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -28,12 +40,22 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
-        <SiteNav />
-        <main className="flex-1">{children}</main>
-        <Toaster richColors closeButton position="top-right" />
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: setInitialTheme }} />
+      </head>
+      <body className="antialiased">
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+          <Toaster
+            theme="system"
+            richColors
+            closeButton
+            position="top-right"
+          />
+        </ThemeProvider>
       </body>
     </html>
   );

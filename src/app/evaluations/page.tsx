@@ -8,87 +8,96 @@ import {
   TriangleAlert,
   Eye,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { GlassCard } from "@/components/glass-card";
+import { StatCard } from "@/components/stat-card";
+import { PageHeader } from "@/components/page-header";
 import { EVALUATIONS } from "@/data/evaluations";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Evaluations — AI Operations Agent",
 };
 
 const CATEGORY_BADGE = {
-  good: { label: "Good answer", tone: "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20", icon: CheckCircle2 },
-  bad: { label: "Bad answer", tone: "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20", icon: AlertTriangle },
-  "source-mismatch": { label: "Source mismatch", tone: "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20", icon: Eye },
-  hallucination: { label: "Hallucination risk", tone: "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20", icon: TriangleAlert },
+  good: {
+    label: "Good answer",
+    cls: "status-completed",
+    icon: CheckCircle2,
+  },
+  bad: { label: "Bad answer", cls: "status-review", icon: AlertTriangle },
+  "source-mismatch": { label: "Source mismatch", cls: "status-pending", icon: Eye },
+  hallucination: {
+    label: "Hallucination risk",
+    cls: "status-review",
+    icon: TriangleAlert,
+  },
 };
 
 export default function EvaluationsPage() {
   const passing = EVALUATIONS.filter((e) => e.pass).length;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-caption text-[rgba(var(--text)/0.6)] hover:text-[rgb(var(--text))]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to dashboard
       </Link>
 
-      <div className="mt-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Evaluations</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          A small, hand-authored eval set that captures the failure modes we care about.
-          This is the bar we&apos;d hold the production agent to.
-        </p>
+      <div className="mt-3 max-w-3xl">
+        <PageHeader
+          title="Evaluations"
+          subtitle="A small, hand-authored eval set that captures the failure modes we care about. This is the bar we'd hold the production agent to."
+        />
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-4">
-        <StatCard label="Total" value={EVALUATIONS.length} />
-        <StatCard label="Passing" value={passing} tone="success" />
-        <StatCard label="Failing" value={EVALUATIONS.length - passing} tone="danger" />
-        <StatCard label="Guardrails verified" value={EVALUATIONS.filter((e) => e.guardrail).length} tone="info" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Total" value={EVALUATIONS.length} tone="dark" />
+        <StatCard label="Passing" value={passing} tone="purple" />
+        <StatCard
+          label="Failing"
+          value={EVALUATIONS.length - passing}
+          tone="yellow"
+        />
+        <StatCard
+          label="Guardrails verified"
+          value={EVALUATIONS.filter((e) => e.guardrail).length}
+          tone="dark"
+        />
       </div>
 
-      <div className="mt-8 space-y-6">
+      <div className="mt-8 space-y-5">
         {EVALUATIONS.map((e) => {
           const cat = CATEGORY_BADGE[e.category];
           const CatIcon = cat.icon;
           return (
-            <Card key={e.id} className="overflow-hidden">
-              <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ring-inset ${cat.tone}`}
-                      >
-                        <CatIcon className="h-3 w-3" />
-                        {cat.label}
-                      </span>
-                      <Badge variant="outline" className="text-[10px]">
-                        {e.id}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-base">{e.title}</CardTitle>
+            <GlassCard key={e.id} className="overflow-hidden" padded>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className={cn(cat.cls)}>
+                      <CatIcon className="h-3 w-3" />
+                      {cat.label}
+                    </span>
+                    <code className="rounded bg-[rgba(var(--text)/0.06)] px-1.5 py-0.5 text-[10px] text-[rgba(var(--text)/0.65)]">
+                      {e.id}
+                    </code>
                   </div>
-                  <PassFailBadge pass={e.pass} />
+                  <h3 className="text-body-lg font-semibold">{e.title}</h3>
                 </div>
-                <CardDescription className="pt-2">
-                  <span className="font-medium text-foreground">What happened: </span>
-                  {e.whatHappened}
-                </CardDescription>
-              </CardHeader>
+                <PassFailBadge pass={e.pass} />
+              </div>
+              <p className="mt-3 text-body-sm text-[rgba(var(--text)/0.75)]">
+                <span className="font-semibold text-[rgb(var(--text))]">
+                  What happened:{" "}
+                </span>
+                {e.whatHappened}
+              </p>
 
-              <CardContent className="space-y-4 pt-0">
+              <div className="mt-4 space-y-4">
                 <Section title="Input">
-                  <pre className="rounded-md border border-border bg-muted/40 p-3 text-xs whitespace-pre-wrap">
+                  <pre className="rounded-2xl border border-[rgba(var(--text)/0.06)] bg-[rgba(var(--text)/0.03)] p-3 text-caption whitespace-pre-wrap">
                     {e.input}
                   </pre>
                 </Section>
@@ -99,7 +108,10 @@ export default function EvaluationsPage() {
                     rows={[
                       ["Request type", e.aiOutput.requestType],
                       ["Priority", e.aiOutput.priority],
-                      ["Confidence", `${Math.round(e.aiOutput.confidence * 100)}%`],
+                      [
+                        "Confidence",
+                        `${Math.round(e.aiOutput.confidence * 100)}%`,
+                      ],
                       ["Needs review", e.aiOutput.needsHumanReview ? "yes" : "no"],
                     ]}
                     facts={e.aiOutput.keyFacts}
@@ -118,15 +130,15 @@ export default function EvaluationsPage() {
                   />
                 </div>
 
-                <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
-                  <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <div className="rounded-2xl border border-[rgba(var(--accent)/0.20)] bg-[rgba(var(--accent)/0.06)] p-3 text-body-sm">
+                  <div className="mb-1 flex items-center gap-2 text-overline uppercase tracking-wide text-[rgb(var(--accent))]">
                     <ShieldCheck className="h-3.5 w-3.5" />
                     Guardrail
                   </div>
-                  <p>{e.guardrail}</p>
+                  <p className="text-[rgba(var(--text)/0.85)]">{e.guardrail}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           );
         })}
       </div>
@@ -136,17 +148,11 @@ export default function EvaluationsPage() {
 
 function PassFailBadge({ pass }: { pass: boolean }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-        pass
-          ? "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
-          : "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20"
-      }`}
-    >
+    <span className={pass ? "status-completed" : "status-review"}>
       {pass ? (
-        <CheckCircle2 className="h-3.5 w-3.5" />
+        <CheckCircle2 className="h-3 w-3" />
       ) : (
-        <XCircle className="h-3.5 w-3.5" />
+        <XCircle className="h-3 w-3" />
       )}
       {pass ? "Pass" : "Fail"}
     </span>
@@ -156,7 +162,7 @@ function PassFailBadge({ pass }: { pass: boolean }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h4 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <h4 className="mb-1.5 text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
         {title}
       </h4>
       {children}
@@ -178,21 +184,23 @@ function OutputColumn({
   draftSnippet?: string;
 }) {
   return (
-    <div className="rounded-md border border-border bg-card p-3">
-      <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-2xl border border-[rgba(var(--text)/0.06)] bg-[rgba(var(--text)/0.03)] p-3">
+      <h4 className="mb-2 text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
         {title}
       </h4>
-      <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-xs">
+      <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-caption">
         {rows.map(([k, v]) => (
           <div key={k} className="contents">
-            <dt className="text-muted-foreground">{k}</dt>
+            <dt className="text-[rgba(var(--text)/0.55)]">{k}</dt>
             <dd className="font-medium">{v}</dd>
           </div>
         ))}
       </dl>
       <div className="mt-2">
-        <p className="text-xs font-medium text-muted-foreground">Key facts</p>
-        <ul className="mt-1 text-xs">
+        <p className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
+          Key facts
+        </p>
+        <ul className="mt-1 text-caption">
           {facts.map((f, i) => (
             <li key={i} className="flex items-start gap-1.5">
               <span className="mt-1.5 h-1 w-1 rounded-full bg-current opacity-60" />
@@ -202,8 +210,10 @@ function OutputColumn({
         </ul>
       </div>
       <div className="mt-2">
-        <p className="text-xs font-medium text-muted-foreground">Actions chosen</p>
-        <ul className="mt-1 text-xs">
+        <p className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
+          Actions chosen
+        </p>
+        <ul className="mt-1 text-caption">
           {actions.map((a, i) => (
             <li key={i}>· {a}</li>
           ))}
@@ -211,37 +221,14 @@ function OutputColumn({
       </div>
       {draftSnippet ? (
         <div className="mt-2">
-          <p className="text-xs font-medium text-muted-foreground">Draft snippet</p>
-          <p className="mt-1 rounded border border-border bg-muted/40 p-2 text-xs italic">
+          <p className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
+            Draft snippet
+          </p>
+          <p className="mt-1 rounded-xl border border-[rgba(var(--text)/0.06)] bg-[rgba(var(--text)/0.03)] p-2 text-caption italic">
             “{draftSnippet}”
           </p>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone?: "default" | "success" | "danger" | "info";
-}) {
-  const toneClass = {
-    default: "text-foreground",
-    success: "text-emerald-600 dark:text-emerald-400",
-    danger: "text-rose-600 dark:text-rose-400",
-    info: "text-sky-600 dark:text-sky-400",
-  }[tone ?? "default"];
-  return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold tracking-tight ${toneClass}`}>
-        {value}
-      </p>
     </div>
   );
 }

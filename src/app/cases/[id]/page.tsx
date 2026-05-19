@@ -16,6 +16,7 @@ import { CaseTimeline } from "@/components/case-timeline";
 import { CaseDraftEditor } from "@/components/case-draft-editor";
 import { CaseStatusButtons } from "@/components/case-status-buttons";
 import { CaseMetadataEditor } from "@/components/case-metadata-editor";
+import { GlassCard } from "@/components/glass-card";
 import {
   parseJson,
   type CaseStatus,
@@ -75,21 +76,19 @@ export default async function CaseDetailPage({ params }: PageProps) {
   }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-caption text-[rgba(var(--text)/0.6)] hover:text-[rgb(var(--text))]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to dashboard
       </Link>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {case_.title}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Case <code className="text-xs">{case_.id}</code>
+          <h1 className="text-heading-1 font-bold tracking-tight">{case_.title}</h1>
+          <p className="mt-1 text-caption text-[rgba(var(--text)/0.55)]">
+            Case <code className="rounded bg-[rgba(var(--text)/0.06)] px-1.5 py-0.5">{case_.id}</code>
           </p>
         </div>
         <CaseStatusButtons
@@ -100,38 +99,44 @@ export default async function CaseDetailPage({ params }: PageProps) {
 
       <div className="mt-6">
         <Tabs defaultValue="overview">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="extracted">Extracted data</TabsTrigger>
-            <TabsTrigger value="draft">Draft & metadata</TabsTrigger>
-            <TabsTrigger value="actions">
+          <TabsList className="rounded-full bg-[rgba(var(--text)/0.04)] p-1">
+            <TabsTrigger value="overview" className="rounded-full px-4">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="extracted" className="rounded-full px-4">
+              Extracted data
+            </TabsTrigger>
+            <TabsTrigger value="draft" className="rounded-full px-4">
+              Draft &amp; metadata
+            </TabsTrigger>
+            <TabsTrigger value="actions" className="rounded-full px-4">
               Actions ({actions.length})
             </TabsTrigger>
-            <TabsTrigger value="tasks">
+            <TabsTrigger value="tasks" className="rounded-full px-4">
               Tasks ({case_.tasks.length})
             </TabsTrigger>
-            <TabsTrigger value="timeline">
+            <TabsTrigger value="timeline" className="rounded-full px-4">
               Timeline ({case_.activity.length})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-4">
+          <TabsContent value="overview" className="mt-5">
             <CaseOverview case_={case_} analysis={analysis} />
             {analysis?.internalNotes ? (
-              <div className="mt-4 rounded-lg border border-dashed border-border bg-card p-4">
-                <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <GlassCard className="mt-4" padded>
+                <h3 className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
                   Internal notes
                 </h3>
-                <p className="mt-1 text-sm">{analysis.internalNotes}</p>
-              </div>
+                <p className="mt-1 text-body-sm">{analysis.internalNotes}</p>
+              </GlassCard>
             ) : null}
           </TabsContent>
 
-          <TabsContent value="extracted" className="mt-4">
+          <TabsContent value="extracted" className="mt-5">
             <CaseExtracted data={analysis?.extractedData ?? null} />
           </TabsContent>
 
-          <TabsContent value="draft" className="mt-4 space-y-4">
+          <TabsContent value="draft" className="mt-5 space-y-4">
             <CaseMetadataEditor
               caseId={case_.id}
               requestType={case_.requestType}
@@ -144,15 +149,15 @@ export default async function CaseDetailPage({ params }: PageProps) {
             />
           </TabsContent>
 
-          <TabsContent value="actions" className="mt-4">
+          <TabsContent value="actions" className="mt-5">
             <CaseActionsPanel caseId={case_.id} actions={actions} />
           </TabsContent>
 
-          <TabsContent value="tasks" className="mt-4">
+          <TabsContent value="tasks" className="mt-5">
             <CaseTasks caseId={case_.id} tasks={case_.tasks} />
           </TabsContent>
 
-          <TabsContent value="timeline" className="mt-4">
+          <TabsContent value="timeline" className="mt-5">
             <CaseTimeline events={case_.activity} />
           </TabsContent>
         </Tabs>

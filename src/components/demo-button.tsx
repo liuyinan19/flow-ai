@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,13 +12,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DemoRunner, type DemoStepKey } from "@/components/demo-runner";
+import { cn } from "@/lib/utils";
 
 export function DemoButton({
-  variant = "default",
   size = "default",
   className,
 }: {
-  variant?: "default" | "outline" | "secondary" | "ghost";
   size?: "default" | "sm" | "lg";
   className?: string;
 }) {
@@ -28,6 +26,9 @@ export function DemoButton({
   const [completed, setCompleted] = useState<Set<DemoStepKey>>(new Set());
   const [active, setActive] = useState<DemoStepKey | null>(null);
   const [done, setDone] = useState(false);
+
+  const sizeClass =
+    size === "sm" ? "h-9 px-4 text-caption" : size === "lg" ? "h-12 px-7 text-body-lg" : "h-11 px-6 text-sm";
 
   const start = async () => {
     setRunning(true);
@@ -50,15 +51,12 @@ export function DemoButton({
         const { value, done: streamDone } = await reader.read();
         if (streamDone) break;
         buffer += decoder.decode(value, { stream: true });
-
-        // SSE messages are separated by blank lines.
         let sep: number;
         while ((sep = buffer.indexOf("\n\n")) !== -1) {
           const frame = buffer.slice(0, sep);
           buffer = buffer.slice(sep + 2);
           const evt = parseFrame(frame);
           if (!evt) continue;
-
           if (evt.event === "step") {
             const name = evt.data.name as DemoStepKey;
             setActive((prev) => {
@@ -83,8 +81,6 @@ export function DemoButton({
       }
 
       if (!finalCaseId) throw new Error("Demo stream ended without a case ID.");
-
-      // Brief pause so the user sees all steps as completed before redirect.
       setTimeout(() => {
         router.push(`/cases/${finalCaseId}`);
       }, 600);
@@ -96,12 +92,18 @@ export function DemoButton({
 
   return (
     <>
-      <Button
-        size={size}
-        variant={variant}
-        className={className}
+      <button
+        type="button"
         onClick={start}
         disabled={running}
+        className={cn(
+          "focus-ring pressable inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition-shadow",
+          "bg-gradient-to-r from-[rgb(var(--accent))] to-[rgb(var(--accent2))] text-white",
+          "shadow-[0_8px_24px_-8px_rgba(168,162,255,0.55)] hover:shadow-[0_12px_32px_-8px_rgba(168,162,255,0.75)]",
+          "disabled:cursor-not-allowed disabled:opacity-70",
+          sizeClass,
+          className,
+        )}
       >
         {running ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -109,9 +111,9 @@ export function DemoButton({
           <Sparkles className="h-4 w-4" />
         )}
         Run demo case
-      </Button>
+      </button>
       <Dialog open={running} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+        <DialogContent className="card-glass sm:max-w-md" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>Running demo case</DialogTitle>
             <DialogDescription>

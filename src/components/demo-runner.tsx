@@ -1,6 +1,8 @@
 "use client";
 
 import { Check, Loader2 } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { MDiv, premiumEase, snappySpring } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
 export const DEMO_STEPS = [
@@ -15,18 +17,17 @@ export const DEMO_STEPS = [
 
 export type DemoStepKey = (typeof DEMO_STEPS)[number]["key"];
 
-interface DemoRunnerProps {
-  /** Steps that have been completed (received from the server stream). */
+export function DemoRunner({
+  completed,
+  active,
+  done,
+}: {
   completed: Set<DemoStepKey>;
-  /** The step currently in flight, if any. */
   active: DemoStepKey | null;
-  /** True once the server has emitted "complete". */
   done: boolean;
-}
-
-export function DemoRunner({ completed, active, done }: DemoRunnerProps) {
+}) {
   return (
-    <ol className="space-y-2 py-2">
+    <ol className="space-y-1.5 py-2">
       {DEMO_STEPS.map((step, i) => {
         const isDone = done || completed.has(step.key);
         const isActive = !isDone && active === step.key;
@@ -34,35 +35,61 @@ export function DemoRunner({ completed, active, done }: DemoRunnerProps) {
           <li
             key={step.key}
             className={cn(
-              "flex items-center gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm",
-              isActive && "bg-muted/60",
+              "flex items-center gap-3 rounded-2xl px-3 py-2 text-body-sm transition-colors duration-200",
+              isActive && "bg-[rgba(var(--accent)/0.10)]",
             )}
           >
-            <span
+            <MDiv
+              layout
+              transition={snappySpring}
               className={cn(
-                "flex h-5 w-5 items-center justify-center rounded-full",
+                "grid h-6 w-6 place-items-center rounded-full text-[10px] font-semibold",
                 isDone
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-[rgb(var(--green))] text-white"
                   : isActive
-                    ? "bg-foreground text-background"
-                    : "bg-muted text-muted-foreground",
+                    ? "bg-gradient-to-br from-[rgb(var(--accent))] to-[rgb(var(--accent2))] text-white"
+                    : "bg-[rgba(var(--text)/0.08)] text-[rgba(var(--text)/0.55)]",
               )}
             >
-              {isDone ? (
-                <Check className="h-3 w-3" />
-              ) : isActive ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <span className="text-[10px]">{i + 1}</span>
-              )}
-            </span>
+              <AnimatePresence mode="wait" initial={false}>
+                {isDone ? (
+                  <MDiv
+                    key="check"
+                    initial={{ scale: 0, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.25, ease: premiumEase }}
+                  >
+                    <Check className="h-3 w-3" />
+                  </MDiv>
+                ) : isActive ? (
+                  <MDiv
+                    key="loader"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  </MDiv>
+                ) : (
+                  <MDiv
+                    key="num"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {i + 1}
+                  </MDiv>
+                )}
+              </AnimatePresence>
+            </MDiv>
             <span
               className={cn(
+                "transition-colors",
                 isDone
-                  ? "text-foreground"
+                  ? "text-[rgba(var(--text)/0.85)]"
                   : isActive
-                    ? "font-medium"
-                    : "text-muted-foreground",
+                    ? "font-semibold text-[rgb(var(--text))]"
+                    : "text-[rgba(var(--text)/0.55)]",
               )}
             >
               {step.label}

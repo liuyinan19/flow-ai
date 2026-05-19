@@ -1,12 +1,9 @@
 import { formatDistanceToNow, format } from "date-fns";
-import {
-  ShieldAlert,
-  Sparkles,
-  TriangleAlert,
-} from "lucide-react";
+import { ShieldAlert, Sparkles, TriangleAlert } from "lucide-react";
 import { StatusPill } from "@/components/status-pill";
 import { PriorityPill } from "@/components/priority-pill";
 import { ConfidenceBar } from "@/components/confidence-bar";
+import { GlassCard } from "@/components/glass-card";
 import { cn } from "@/lib/utils";
 import type {
   CaseStatus,
@@ -40,23 +37,27 @@ interface OverviewProps {
 }
 
 const SEVERITY_TONE: Record<RiskSeverity, string> = {
-  LOW: "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-500/30 dark:bg-zinc-500/10 dark:text-zinc-300",
+  LOW: "border-[rgba(var(--text)/0.10)] bg-[rgba(var(--text)/0.04)] text-[rgba(var(--text)/0.85)]",
   MEDIUM:
-    "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200",
-  HIGH:
-    "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200",
+    "border-[rgba(var(--accent2)/0.30)] bg-[rgba(var(--accent2)/0.10)] text-[rgb(var(--accent2))]",
+  HIGH: "border-[rgba(var(--red)/0.30)] bg-[rgba(var(--red)/0.10)] text-[rgb(var(--red))]",
 };
 
 export function CaseOverview({ case_, analysis }: OverviewProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <div className="lg:col-span-2 space-y-4">
+      <div className="space-y-4 lg:col-span-2">
         {case_.needsHumanReview ? (
-          <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
-            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <div
+            className="flex items-start gap-3 rounded-3xl border border-[rgba(var(--red)/0.25)] bg-[rgba(var(--red)/0.08)] p-4 text-body-sm"
+            style={{ boxShadow: "0 8px 32px -8px rgba(230, 90, 90, 0.25)" }}
+          >
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[rgb(var(--red))]" />
             <div>
-              <p className="font-medium">Held for human review.</p>
-              <p className="text-rose-800/80 dark:text-rose-200/80">
+              <p className="font-semibold text-[rgb(var(--red))]">
+                Held for human review.
+              </p>
+              <p className="text-[rgba(var(--text)/0.75)]">
                 Our guardrails flagged this case. Approve or edit the AI&apos;s
                 output before any tool action proceeds.
               </p>
@@ -64,67 +65,69 @@ export function CaseOverview({ case_, analysis }: OverviewProps) {
           </div>
         ) : null}
 
-        <section className="rounded-lg border border-border bg-card p-4">
-          <h3 className="text-sm font-medium text-muted-foreground">
+        <GlassCard padded>
+          <h3 className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
             AI summary
           </h3>
-          <p className="mt-2 text-sm leading-relaxed">
+          <p className="mt-2 text-body leading-relaxed">
             {analysis?.summary ?? "No analysis yet."}
           </p>
           {analysis?.classificationReason ? (
-            <div className="mt-3 flex items-start gap-2 rounded-md border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground">
-              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div className="mt-3 flex items-start gap-2 rounded-2xl border border-[rgba(var(--text)/0.06)] bg-[rgba(var(--text)/0.03)] p-3 text-caption text-[rgba(var(--text)/0.7)]">
+              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[rgb(var(--accent))]" />
               <span>
-                <span className="font-medium text-foreground">
-                  Classification reasoning —
-                </span>{" "}
+                <span className="font-semibold text-[rgb(var(--text))]">
+                  Classification reasoning —{" "}
+                </span>
                 {analysis.classificationReason}
               </span>
             </div>
           ) : null}
-        </section>
+        </GlassCard>
 
-        <section className="rounded-lg border border-border bg-card p-4">
-          <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+        <GlassCard padded>
+          <h3 className="text-overline mb-2 uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
             Original input
           </h3>
-          <div className="rounded-md border border-border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+          <div className="rounded-2xl border border-[rgba(var(--text)/0.06)] bg-[rgba(var(--text)/0.03)] p-4 text-body-sm leading-relaxed whitespace-pre-wrap">
             {case_.rawInput}
           </div>
-        </section>
+        </GlassCard>
 
         {analysis && analysis.riskFlags.length > 0 ? (
-          <section className="rounded-lg border border-border bg-card p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <h3 className="text-sm font-medium">Risk flags</h3>
+          <GlassCard padded>
+            <div className="mb-3 flex items-center gap-2">
+              <TriangleAlert className="h-4 w-4 text-[rgb(var(--accent2))]" />
+              <h3 className="text-body-sm font-semibold">Risk flags</h3>
             </div>
             <ul className="space-y-2">
               {analysis.riskFlags.map((f, i) => (
                 <li
                   key={`${f.type}-${i}`}
                   className={cn(
-                    "flex items-start gap-3 rounded-md border p-2.5 text-xs",
+                    "flex items-start gap-3 rounded-2xl border p-3 text-caption",
                     SEVERITY_TONE[f.severity],
                   )}
                 >
-                  <span className="inline-flex h-5 items-center rounded-full bg-background/70 px-2 text-[10px] font-semibold uppercase ring-1 ring-inset ring-border">
+                  <span className="inline-flex h-5 items-center rounded-full bg-[rgba(var(--text)/0.06)] px-2 text-[10px] font-semibold uppercase tracking-wide">
                     {f.severity}
                   </span>
                   <div>
-                    <p className="font-medium">{f.type}</p>
-                    <p className="opacity-80">{f.reason}</p>
+                    <p className="text-body-sm font-semibold">{f.type}</p>
+                    <p className="text-caption opacity-85">{f.reason}</p>
                   </div>
                 </li>
               ))}
             </ul>
-          </section>
+          </GlassCard>
         ) : null}
       </div>
 
-      <aside className="space-y-2 rounded-lg border border-border bg-card p-4">
-        <h3 className="text-sm font-medium">Case metadata</h3>
-        <dl className="grid gap-3 text-xs">
+      <aside className="card-glass grain space-y-3 p-5">
+        <h3 className="text-overline uppercase tracking-wide text-[rgba(var(--text)/0.55)]">
+          Case metadata
+        </h3>
+        <dl className="grid gap-3 text-caption">
           <Row label="Status">
             <StatusPill status={case_.status as CaseStatus} />
           </Row>
@@ -140,7 +143,7 @@ export function CaseOverview({ case_, analysis }: OverviewProps) {
           </Row>
           <Row label="Type">
             {case_.requestType ? (
-              <span className="text-foreground">
+              <span className="capitalize">
                 {case_.requestType.toLowerCase()}
               </span>
             ) : (
@@ -152,7 +155,7 @@ export function CaseOverview({ case_, analysis }: OverviewProps) {
             <div className="text-right">
               <div>{case_.customerName ?? "—"}</div>
               {case_.customerEmail ? (
-                <div className="text-muted-foreground">
+                <div className="text-[10px] text-[rgba(var(--text)/0.55)]">
                   {case_.customerEmail}
                 </div>
               ) : null}
@@ -178,8 +181,8 @@ export function CaseOverview({ case_, analysis }: OverviewProps) {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="text-right font-medium text-foreground">{children}</dd>
+      <dt className="text-[rgba(var(--text)/0.55)]">{label}</dt>
+      <dd className="text-right font-medium text-[rgb(var(--text))]">{children}</dd>
     </div>
   );
 }

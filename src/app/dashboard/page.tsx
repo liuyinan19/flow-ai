@@ -5,14 +5,15 @@ import {
   AlertTriangle,
   CheckCircle2,
   Gauge,
+  Plus,
 } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { MetricCard } from "@/components/metric-card";
+import { StatCard } from "@/components/stat-card";
+import { GlassCard } from "@/components/glass-card";
 import { BreakdownCard } from "@/components/breakdown-card";
 import { CaseTable } from "@/components/case-table";
 import { CaseFilters } from "@/components/case-filters";
 import { DemoButton } from "@/components/demo-button";
+import { PageHeader } from "@/components/page-header";
 import { getDashboardMetrics, listCases } from "@/lib/case-queries";
 import {
   PRIORITIES,
@@ -34,8 +35,14 @@ export default async function DashboardPage({
 }: DashboardPageProps) {
   const params = await searchParams;
   const filter = {
-    status: typeof params.status === "string" ? (params.status as CaseStatus) : undefined,
-    priority: typeof params.priority === "string" ? (params.priority as Priority) : undefined,
+    status:
+      typeof params.status === "string"
+        ? (params.status as CaseStatus)
+        : undefined,
+    priority:
+      typeof params.priority === "string"
+        ? (params.priority as Priority)
+        : undefined,
     requestType:
       typeof params.requestType === "string"
         ? (params.requestType as RequestType)
@@ -67,55 +74,58 @@ export default async function DashboardPage({
       : `${Math.round(metrics.avgConfidence * 100)}%`;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Operations Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            All inbound cases the AI Operations Agent has triaged.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <DemoButton variant="default" size="sm" />
-          <Link
-            href="/cases/new"
-            className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
-          >
-            New case
-          </Link>
-        </div>
-      </div>
+    <div className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
+      <PageHeader
+        title="Operations Dashboard"
+        subtitle="All inbound cases the AI Operations Agent has triaged."
+        actions={
+          <>
+            <DemoButton size="sm" />
+            <Link
+              href="/cases/new"
+              className="focus-ring pressable inline-flex h-9 items-center gap-1.5 rounded-full border border-[rgba(var(--text)/0.12)] bg-[rgba(var(--text)/0.04)] px-4 text-sm font-semibold backdrop-blur hover:bg-[rgba(var(--text)/0.08)]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New case
+            </Link>
+          </>
+        }
+      />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <MetricCard
+        <StatCard
           label="Total cases"
           value={metrics.total}
-          icon={Inbox}
           hint={`${metrics.newCount} new`}
+          icon={<Inbox className="h-3.5 w-3.5" />}
+          tone="purple"
         />
-        <MetricCard
+        <StatCard
           label="Needs review"
           value={metrics.needsReview}
-          icon={ShieldAlert}
-          tone={metrics.needsReview > 0 ? "danger" : "default"}
+          hint={metrics.needsReview > 0 ? "Held for a human" : "All clear"}
+          icon={<ShieldAlert className="h-3.5 w-3.5" />}
+          tone="yellow"
         />
-        <MetricCard
-          label="Urgent cases"
+        <StatCard
+          label="Urgent"
           value={metrics.urgent}
-          icon={AlertTriangle}
-          tone={metrics.urgent > 0 ? "warning" : "default"}
+          hint="Highest priority bucket"
+          icon={<AlertTriangle className="h-3.5 w-3.5" />}
+          tone="dark"
         />
-        <MetricCard
+        <StatCard
           label="Completed"
           value={metrics.completed}
-          icon={CheckCircle2}
-          tone="success"
+          icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+          tone="dark"
         />
-        <MetricCard
+        <StatCard
           label="Avg confidence"
           value={avgConfPct}
-          icon={Gauge}
-          hint="Across all analyzed cases"
+          hint="Across analyzed cases"
+          icon={<Gauge className="h-3.5 w-3.5" />}
+          tone="dark"
         />
       </div>
 
@@ -125,13 +135,15 @@ export default async function DashboardPage({
         <BreakdownCard title="By priority" items={priorityCounts} />
       </div>
 
-      <div className="mt-8 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold">Recent cases</h2>
+      <GlassCard className="mt-8" padded>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-heading-3 font-semibold tracking-tight">
+            Recent cases
+          </h2>
           <CaseFilters />
         </div>
         <CaseTable cases={cases} />
-      </div>
+      </GlassCard>
     </div>
   );
 }

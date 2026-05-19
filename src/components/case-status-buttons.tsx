@@ -4,30 +4,31 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Check, Play, ShieldAlert, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { CaseStatus } from "@/lib/types";
+
+type Variant = "primary" | "outline" | "ghost";
 
 const TRANSITIONS: {
   to: CaseStatus;
   label: string;
   icon: React.ElementType;
-  variant?: "default" | "outline" | "secondary";
-  description: string;
+  variant: Variant;
   allowedFrom: CaseStatus[];
 }[] = [
   {
     to: "ANALYZED",
     label: "Approve AI analysis",
     icon: Check,
+    variant: "primary",
     allowedFrom: ["NEEDS_REVIEW"],
-    description: "Take this off the review queue.",
   },
   {
     to: "IN_PROGRESS",
     label: "Mark in progress",
     icon: Play,
+    variant: "primary",
     allowedFrom: ["ANALYZED", "NEEDS_REVIEW"],
-    description: "Pick this case up.",
   },
   {
     to: "NEEDS_REVIEW",
@@ -35,17 +36,24 @@ const TRANSITIONS: {
     icon: ShieldAlert,
     variant: "outline",
     allowedFrom: ["NEW", "ANALYZED", "IN_PROGRESS"],
-    description: "Escalate to a human.",
   },
   {
     to: "COMPLETED",
     label: "Mark completed",
     icon: CheckCheck,
-    variant: "secondary",
+    variant: "outline",
     allowedFrom: ["ANALYZED", "IN_PROGRESS", "NEEDS_REVIEW"],
-    description: "Close out the case.",
   },
 ];
+
+const VARIANT_CLASS: Record<Variant, string> = {
+  primary:
+    "bg-gradient-to-r from-[rgb(var(--accent))] to-[rgb(var(--accent2))] text-white shadow-[0_8px_24px_-8px_rgba(168,162,255,0.55)]",
+  outline:
+    "border border-[rgba(var(--text)/0.12)] bg-[rgba(var(--text)/0.04)] text-[rgb(var(--text))] hover:bg-[rgba(var(--text)/0.08)]",
+  ghost:
+    "text-[rgba(var(--text)/0.7)] hover:bg-[rgba(var(--text)/0.06)] hover:text-[rgb(var(--text))]",
+};
 
 export function CaseStatusButtons({
   caseId,
@@ -78,7 +86,7 @@ export function CaseStatusButtons({
 
   if (available.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-caption text-[rgba(var(--text)/0.55)]">
         Case is {currentStatus.toLowerCase()} — no further transitions.
       </p>
     );
@@ -89,15 +97,18 @@ export function CaseStatusButtons({
       {available.map((t) => {
         const Icon = t.icon;
         return (
-          <Button
+          <button
             key={t.to}
-            size="sm"
-            variant={t.variant ?? "default"}
+            type="button"
             onClick={() => move(t.to)}
+            className={cn(
+              "focus-ring pressable inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-caption font-semibold",
+              VARIANT_CLASS[t.variant],
+            )}
           >
             <Icon className="h-3.5 w-3.5" />
             {t.label}
-          </Button>
+          </button>
         );
       })}
     </div>
