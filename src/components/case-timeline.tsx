@@ -21,6 +21,7 @@ const ICONS: Record<string, React.ElementType> = {
   case_created: Inbox,
   analysis_completed: Sparkles,
   analysis_regenerated: RefreshCcw,
+  draft_regenerated: Sparkles,
   status_change: ArrowRightLeft,
   human_edit: Pencil,
   tool_call: Wrench,

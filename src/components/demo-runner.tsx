@@ -1,42 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STEPS = [
-  "Reading the request",
-  "Classifying intent",
-  "Extracting facts",
-  "Choosing actions",
-  "Drafting response",
-  "Creating tasks",
-  "Flagging review status",
-];
+export const DEMO_STEPS = [
+  { key: "reading", label: "Reading the request" },
+  { key: "classifying", label: "Classifying intent" },
+  { key: "extracting", label: "Extracting facts" },
+  { key: "choosing_actions", label: "Choosing actions" },
+  { key: "drafting", label: "Drafting response" },
+  { key: "creating_tasks", label: "Creating tasks" },
+  { key: "flagging", label: "Flagging review status" },
+] as const;
 
-export function DemoRunner({ pending }: { pending: boolean }) {
-  const [step, setStep] = useState(0);
+export type DemoStepKey = (typeof DEMO_STEPS)[number]["key"];
 
-  useEffect(() => {
-    if (step >= STEPS.length) return;
-    // While the API call is in flight, walk through steps gradually.
-    // Once the API resolves, jump to the last step.
-    if (!pending && step < STEPS.length - 1) {
-      const t = setTimeout(() => setStep(STEPS.length - 1), 200);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(() => setStep((s) => Math.min(s + 1, STEPS.length - 1)), 550);
-    return () => clearTimeout(t);
-  }, [step, pending]);
+interface DemoRunnerProps {
+  /** Steps that have been completed (received from the server stream). */
+  completed: Set<DemoStepKey>;
+  /** The step currently in flight, if any. */
+  active: DemoStepKey | null;
+  /** True once the server has emitted "complete". */
+  done: boolean;
+}
 
+export function DemoRunner({ completed, active, done }: DemoRunnerProps) {
   return (
     <ol className="space-y-2 py-2">
-      {STEPS.map((label, i) => {
-        const isDone = i < step || (!pending && i <= step);
-        const isActive = !isDone && i === step;
+      {DEMO_STEPS.map((step, i) => {
+        const isDone = done || completed.has(step.key);
+        const isActive = !isDone && active === step.key;
         return (
           <li
-            key={label}
+            key={step.key}
             className={cn(
               "flex items-center gap-3 rounded-md border border-transparent px-2 py-1.5 text-sm",
               isActive && "bg-muted/60",
@@ -69,7 +65,7 @@ export function DemoRunner({ pending }: { pending: boolean }) {
                     : "text-muted-foreground",
               )}
             >
-              {label}
+              {step.label}
             </span>
           </li>
         );

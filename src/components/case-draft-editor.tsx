@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Mail, Save, RefreshCcw, Loader2 } from "lucide-react";
+import { Mail, Save, RefreshCcw, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,10 +17,13 @@ export function CaseDraftEditor({
   const router = useRouter();
   const [draft, setDraft] = useState(initialDraft);
   const [saving, setSaving] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
+  const [regeneratingDraft, setRegeneratingDraft] = useState(false);
+  const [regeneratingAll, setRegeneratingAll] = useState(false);
+  const [baseline, setBaseline] = useState(initialDraft);
   const [, startTransition] = useTransition();
 
-  const dirty = draft !== initialDraft;
+  const dirty = draft !== baseline;
+  const busy = saving || regeneratingDraft || regeneratingAll;
 
   const save = async () => {
     setSaving(true);
@@ -34,6 +37,7 @@ export function CaseDraftEditor({
         const j = await res.json().catch(() => ({}));
         throw new Error(j.error ?? "Save failed.");
       }
+      setBaseline(draft);
       toast.success("Draft saved. Logged as a human edit.");
       startTransition(() => router.refresh());
     } catch (err) {
@@ -43,22 +47,45 @@ export function CaseDraftEditor({
     }
   };
 
-  const regenerate = async () => {
-    setRegenerating(true);
+  const regenerateDraft = async () => {
+    setRegeneratingDraft(true);
     try {
-      const res = await fetch(`/api/cases/${caseId}/regenerate`, {
+      const res = await fetch(`/api/cases/${caseId}/regenerate-draft`, {
         method: "POST",
       });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.error ?? "Regenerate failed.");
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? "Regenerate failed.");
+      if (typeof j.draftResponse === "string") {
+        setDraft(j.draftResponse);
+        setBaseline(j.draftResponse);
       }
-      toast.success("Analysis regenerated.");
+      toast.success(`Draft regenerated (${j.source}).`);
       startTransition(() => router.refresh());
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Regenerate failed.");
     } finally {
-      setRegenerating(false);
+      setRegeneratingDraft(false);
+    }
+  };
+
+  const regenerateAll = async () => {
+    setRegeneratingAll(true);
+    try {
+      const res = await fetch(`/api/cases/${caseId}/regenerate`, {
+        method: "POST",
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? "Regenerate failed.");
+      if (typeof j.draftResponse === "string") {
+        setDraft(j.draftResponse);
+        setBaseline(j.draftResponse);
+      }
+      toast.success(`Full analysis regenerated (${j.source}).`);
+      startTransition(() => router.refresh());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Regenerate failed.");
+    } finally {
+      setRegeneratingAll(false);
     }
   };
 
@@ -78,26 +105,42 @@ export function CaseDraftEditor({
         onChange={(e) => setDraft(e.target.value)}
         rows={10}
         className="resize-y min-h-[180px] font-mono text-sm"
+        disabled={busy}
       />
-      <div className="mt-3 flex items-center justify-between">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           {dirty ? "Unsaved changes" : "Up to date"}
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
-            onClick={regenerate}
-            disabled={regenerating}
+            onClick={regenerateDraft}
+            disabled={busy}
+            title="Re-run only the draft response, keep classification + tasks."
           >
-            {regenerating ? (
+            {regeneratingDraft ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
+            Regenerate draft
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={regenerateAll}
+            disabled={busy}
+            title="Re-run the full pipeline — replaces analysis, tasks, and tool actions."
+          >
+            {regeneratingAll ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <RefreshCcw className="h-3.5 w-3.5" />
             )}
             Regenerate analysis
           </Button>
-          <Button size="sm" onClick={save} disabled={!dirty || saving}>
+          <Button size="sm" onClick={save} disabled={!dirty || busy}>
             {saving ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (

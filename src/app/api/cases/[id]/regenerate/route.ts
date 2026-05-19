@@ -27,5 +27,6 @@ export async function POST(_req: Request, context: RouteContext) {
     ok: true,
     source: outcome.source,
     guardrailReasons: outcome.guardrailReasons,
+    draftResponse: outcome.analysis.draftResponse,
   });
 }
