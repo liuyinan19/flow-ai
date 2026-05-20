@@ -31,7 +31,6 @@ interface NavItem {
 }
 
 const ITEMS: NavItem[] = [
-  { href: "/", label: "Home", icon: <Sparkles className="h-5 w-5" /> },
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -50,9 +49,14 @@ const ITEMS: NavItem[] = [
 ];
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
   if (href === "/cases/new") return pathname === "/cases/new";
-  if (href === "/dashboard") return pathname.startsWith("/dashboard") || pathname.startsWith("/cases/");
+  if (href === "/dashboard") {
+    // Dashboard "owns" case detail pages but not the new-case form.
+    return (
+      pathname.startsWith("/dashboard") ||
+      (pathname.startsWith("/cases/") && pathname !== "/cases/new")
+    );
+  }
   return pathname.startsWith(href);
 }
 

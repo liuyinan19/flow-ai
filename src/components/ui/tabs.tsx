@@ -10,10 +10,20 @@ function Tabs({
   orientation = "horizontal",
   ...props
 }: TabsPrimitive.Root.Props) {
+  // The CSS selectors below (`data-horizontal:flex-col`, `group-data-horizontal/tabs:*`
+  // on the list/triggers) expect literal `data-horizontal` / `data-vertical` attrs.
+  // base-ui only emits `data-orientation`, so we mirror the orientation onto the
+  // two boolean-style attributes the styles read from.
+  const orientationAttrs =
+    orientation === "vertical"
+      ? { "data-vertical": "" }
+      : { "data-horizontal": "" }
+
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
       data-orientation={orientation}
+      {...orientationAttrs}
       className={cn(
         "group/tabs flex gap-2 data-horizontal:flex-col",
         className
