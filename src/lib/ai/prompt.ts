@@ -1,9 +1,17 @@
+export interface AttachedImage {
+  base64: string;
+  mediaType: "image/png" | "image/jpeg" | "image/webp" | "image/gif";
+  filename: string;
+}
+
 export interface AnalyzeInput {
   rawInput: string;
   customerName?: string | null;
   customerEmail?: string | null;
   inputType?: string | null;
   businessCategory?: string | null;
+  /** Optional image attachments — sent to Claude as multimodal content blocks. */
+  images?: AttachedImage[];
 }
 
 export const SYSTEM_PROMPT = `You are an AI Operations Agent for a B2B SaaS company. Your job is to turn a messy customer request into a structured case so a human team can act on it quickly and safely.
@@ -40,6 +48,12 @@ export function buildUserPrompt(input: AnalyzeInput): string {
   parts.push("---");
   parts.push(input.rawInput);
   parts.push("---");
+  if (input.images && input.images.length > 0) {
+    parts.push("");
+    parts.push(
+      `${input.images.length} image attachment(s) follow as vision content — read them carefully and incorporate any text or evidence they contain into your extracted data.`,
+    );
+  }
   parts.push(
     "Analyze this case and submit the result via the submit_case_analysis tool.",
   );

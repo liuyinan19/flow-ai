@@ -37,7 +37,7 @@ export function NewCaseForm() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [businessCategory, setBusinessCategory] = useState("");
   const [inputType, setInputType] = useState("TEXT");
-  const [filename, setFilename] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   const applySample = (key: keyof typeof SAMPLES) => {
     setRawInput(SAMPLES[key]);
@@ -46,39 +46,79 @@ export function NewCaseForm() {
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    setFilename(`${f.name} (${Math.round(f.size / 1024)} KB)`);
-    setInputType("FILE");
-    toast.info(
-      "File metadata captured. (Demo: file contents aren't parsed — paste the text below.)",
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("File too large — limit is 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    setFile(f);
+    // Infer input type from MIME so the right enum lands on the case row.
+    if (f.type.startsWith("image/")) setInputType("SCREENSHOT");
+    else setInputType("FILE");
+    toast.success(
+      f.type.startsWith("image/")
+        ? `Image attached — Claude will read it directly.`
+        : `${f.name} attached — text will be extracted and fed to the agent.`,
     );
   };
 
+  const clearFile = () => {
+    setFile(null);
+    setInputType("TEXT");
+  };
+
+  const filenameLabel = file
+    ? `${file.name} (${Math.round(file.size / 1024)} KB)`
+    : null;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (rawInput.trim().length < 10) {
+    if (rawInput.trim().length < 10 && !file) {
       toast.error(
-        "Paste at least a sentence so the AI has something to work with.",
+        "Paste at least a sentence or attach a file so the agent has something to work with.",
       );
       return;
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/cases/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rawInput,
-          customerName: customerName || null,
-          customerEmail: customerEmail || null,
-          inputType,
-          businessCategory: businessCategory || null,
-        }),
-      });
+      let res: Response;
+      if (file) {
+        // Multipart path — sends the file alongside text fields.
+        const form = new FormData();
+        form.append("rawInput", rawInput);
+        if (customerName) form.append("customerName", customerName);
+        if (customerEmail) form.append("customerEmail", customerEmail);
+        if (businessCategory) form.append("businessCategory", businessCategory);
+        form.append("inputType", inputType);
+        form.append("file", file);
+        res = await fetch("/api/cases/analyze", {
+          method: "POST",
+          body: form,
+        });
+      } else {
+        res = await fetch("/api/cases/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rawInput,
+            customerName: customerName || null,
+            customerEmail: customerEmail || null,
+            inputType,
+            businessCategory: businessCategory || null,
+          }),
+        });
+      }
       const json = await res.json();
       if (!res.ok || !json.caseId) {
         throw new Error(json.error ?? "Analysis failed.");
       }
-      toast.success("Case analyzed.");
+      toast.success(
+        json.ingested?.kind === "image"
+          ? "Image analyzed by Claude vision."
+          : json.ingested
+            ? "File parsed and analyzed."
+            : "Case analyzed.",
+      );
       router.push(`/cases/${json.caseId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
@@ -169,16 +209,33 @@ export function NewCaseForm() {
           <div>
             <p className="text-body-sm font-medium">Attach a file (optional)</p>
             <p className="text-caption text-[rgba(var(--text)/0.6)]">
-              {filename ?? "Demo only — we record the filename but don't parse contents."}
+              {filenameLabel ??
+                "Supports PDF, DOCX, TXT/MD/CSV, and PNG/JPG screenshots (max 5 MB)."}
             </p>
           </div>
         </div>
-        <label className="cursor-pointer">
-          <span className="focus-ring pressable inline-flex h-9 items-center rounded-full border border-[rgba(var(--text)/0.12)] bg-[rgba(var(--text)/0.04)] px-4 text-caption font-medium hover:bg-[rgba(var(--text)/0.08)]">
-            Choose file
-          </span>
-          <input type="file" className="hidden" onChange={onFile} />
-        </label>
+        <div className="flex items-center gap-2">
+          {file ? (
+            <button
+              type="button"
+              onClick={clearFile}
+              className="focus-ring inline-flex h-9 items-center rounded-full px-3 text-caption text-[rgba(var(--text)/0.6)] hover:text-[rgb(var(--text))]"
+            >
+              Remove
+            </button>
+          ) : null}
+          <label className="cursor-pointer">
+            <span className="focus-ring pressable inline-flex h-9 items-center rounded-full border border-[rgba(var(--text)/0.12)] bg-[rgba(var(--text)/0.04)] px-4 text-caption font-medium hover:bg-[rgba(var(--text)/0.08)]">
+              {file ? "Replace file" : "Choose file"}
+            </span>
+            <input
+              type="file"
+              className="hidden"
+              accept=".txt,.md,.csv,.json,.html,.xml,.pdf,.docx,image/png,image/jpeg,image/webp,image/gif"
+              onChange={onFile}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-1">

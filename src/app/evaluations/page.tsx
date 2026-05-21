@@ -11,6 +11,7 @@ import {
 import { GlassCard } from "@/components/glass-card";
 import { StatCard } from "@/components/stat-card";
 import { PageHeader } from "@/components/page-header";
+import { EvaluationsRunner } from "@/components/evaluations-runner";
 import { EVALUATIONS } from "@/data/evaluations";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +68,11 @@ export default function EvaluationsPage() {
         />
       </div>
 
-      <div className="mt-8 space-y-5">
+      <div className="mt-8">
+        <EvaluationsRunner />
+      </div>
+
+      <div className="mt-6 space-y-5">
         {EVALUATIONS.map((e) => {
           const cat = CATEGORY_BADGE[e.category];
           const CatIcon = cat.icon;

@@ -25,6 +25,24 @@ export async function runAnalysis(input: AnalyzeInput): Promise<AnalyzeOutcome> 
 
   try {
     const client = new Anthropic({ apiKey });
+
+    // Build the user message — text-only when no images, multimodal when an
+    // image was uploaded (e.g. screenshot ingestion).
+    const userContent: Anthropic.Messages.ContentBlockParam[] = [];
+    if (input.images && input.images.length > 0) {
+      for (const img of input.images) {
+        userContent.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: img.mediaType,
+            data: img.base64,
+          },
+        });
+      }
+    }
+    userContent.push({ type: "text", text: buildUserPrompt(input) });
+
     const response = await client.messages.create({
       model: MODEL,
       max_tokens: 4096,
@@ -38,7 +56,7 @@ export async function runAnalysis(input: AnalyzeInput): Promise<AnalyzeOutcome> 
         },
       ],
       tool_choice: { type: "tool", name: TOOL_NAME },
-      messages: [{ role: "user", content: buildUserPrompt(input) }],
+      messages: [{ role: "user", content: userContent }],
     });
 
     const toolUse = response.content.find(

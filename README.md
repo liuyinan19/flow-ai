@@ -20,16 +20,22 @@ This project takes those questions seriously.
 
 The agent runs a deterministic pipeline on each new case:
 
-1. **Ingest** raw input (paste / form / screenshot / voice transcript) and create a `NEW` case.
-2. **Classify & extract** via an Anthropic Claude tool call returning JSON-schema-validated output (Zod-checked).
-3. **Apply guardrails** — confidence floor, keyword triggers, HIGH risk flags, LEGAL request type, and missing-information thresholds all force `needsHumanReview: true`.
+1. **Ingest** raw input from multiple channels:
+   - Pasted text (email body, support ticket, transcribed voice note)
+   - Uploaded text files (`.txt`, `.md`, `.csv`, `.json`, `.html`)
+   - Uploaded PDFs (parsed server-side with `pdf-parse` v2)
+   - Uploaded DOCX (parsed with `mammoth`)
+   - Uploaded screenshots / images (PNG, JPEG, WebP, GIF — sent to Claude as multimodal vision content blocks)
+2. **Classify & extract** via an Anthropic Claude tool call returning JSON-schema-validated output (Zod-checked). When the user attaches an image, the call becomes multimodal — the model reads the screenshot and the prompt together.
+3. **Apply guardrails** — confidence floor (0.75), keyword triggers (refund / lawsuit / GDPR / compliance / chargeback / cancel-my-account), HIGH risk flags, LEGAL request type, and missing-information thresholds all force `needsHumanReview: true`.
 4. **Recommend actions** from a fixed toolbox (`routeCase`, `createInternalTask`, `draftCustomerEmail`, `createCalendarFollowUp`, `sendToHumanReview`).
 5. **Execute** non-sensitive actions and **hold** anything `requiresApproval: true` as `PENDING` for a human click.
 6. **Persist** an analysis, tasks, mock integration actions, and an activity-log entry for every step.
 7. **Move** the case through a status machine (`NEW → ANALYZED → IN_PROGRESS → COMPLETED`, with a `NEEDS_REVIEW` exception path), logging every transition.
 8. **Surface** the whole thing on a polished dashboard with metrics, filters, drill-down, editing, and a streamed demo flow.
+9. **Run live evaluations** at `/evaluations` — fire every fixture through the live pipeline, assert request type / review flag / tool set, and report pass / fail with per-fixture latency.
 
-If no `ANTHROPIC_API_KEY` is configured, the pipeline falls back to a deterministic heuristic mock so the full demo still works end-to-end.
+If no `ANTHROPIC_API_KEY` is configured, the pipeline falls back to a deterministic heuristic mock so the full demo still works end-to-end. Every API response includes a `source: "anthropic" | "mock" | "fallback"` field so the UI surfaces which pipeline ran.
 
 ## Tech stack
 
@@ -165,6 +171,9 @@ See `prisma/schema.prisma` for the full schema. Indexes are added on the columns
 5. **No real actions** — every tool writes a mock row.
 6. **`requiresApproval` flag** — sensitive tools stay PENDING.
 7. **Activity log on every transition, edit, regenerate, and tool call.**
+8. **Per-IP rate limit** on LLM-spending endpoints — 8/min on `/api/cases/analyze`, 4/min on `/api/demo` and `/api/evaluations/run`. Token-bucket, in-memory per instance; documented in `src/lib/rate-limit.ts` as a portfolio-scale placeholder for Upstash / Vercel KV.
+9. **File ingest hardening** — 5 MB cap, MIME allowlist, structured `FileIngestError` codes (`too_large`, `unsupported_type`, `parse_failed`, `empty`) surfaced to the client.
+10. **Route-level `error.tsx` boundary** so a thrown error renders a recover-able UI instead of blanking the page.
 
 ## Evaluation examples
 
@@ -201,7 +210,7 @@ npm run dev
 | Var | Required | Purpose |
 |---|---|---|
 | `DATABASE_URL` | yes | SQLite file by default (`file:./dev.db`). Change to a Postgres URL for prod. |
-| `ANTHROPIC_API_KEY` | no | If set, the real Claude pipeline runs. If not, the heuristic mock runs. |
+| `ANTHROPIC_API_KEY` | no | If set, the real Claude pipeline runs (vision-capable). If not, the heuristic mock runs. |
 | `OPENAI_API_KEY` | no | Reserved for a future OpenAI fallback path. |
 
 ### Scripts

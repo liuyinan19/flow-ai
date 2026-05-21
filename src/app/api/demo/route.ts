@@ -1,4 +1,10 @@
 import { createAndAnalyzeCase } from "@/lib/pipeline";
+import {
+  clientIp,
+  DEFAULT_LIMITS,
+  makeRateLimitResponse,
+  rateLimit,
+} from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +34,10 @@ const STEPS_DURING_WORK = [
 ] as const;
 const STEPS_AFTER_WORK = ["creating_tasks", "flagging"] as const;
 
-export async function POST() {
+export async function POST(req: Request) {
+  const limit = rateLimit(`demo:${clientIp(req)}`, DEFAULT_LIMITS.demo);
+  if (!limit.allowed) return makeRateLimitResponse(limit.retryAfterSec);
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
