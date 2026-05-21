@@ -54,9 +54,19 @@ export function applyGuardrails(
     );
   }
 
-  if (analysis.extractedData.missingInformation.length >= 3) {
+  // Missing-info trigger only fires on high-stakes request types. A vanilla
+  // SALES / SUPPORT / HR inquiry naturally has many "missing info" items
+  // (budget, timeline, decision maker, etc.) — that's normal qualification work
+  // for the owning team, not a reason to escalate.
+  const HIGH_STAKES_TYPES = ["BILLING", "LEGAL", "OPERATIONS"] as const;
+  const isHighStakes = HIGH_STAKES_TYPES.includes(
+    analysis.requestType as (typeof HIGH_STAKES_TYPES)[number],
+  );
+  if (isHighStakes && analysis.extractedData.missingInformation.length >= 3) {
     needsHumanReview = true;
-    reasons.push("3+ missing-information items — case is too ambiguous.");
+    reasons.push(
+      `3+ missing-information items on a ${analysis.requestType} case — too ambiguous to auto-process.`,
+    );
   }
 
   return {
