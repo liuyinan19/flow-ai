@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { TooltipSide } from "@/components/tooltip-side";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SignOutButton } from "@/components/sign-out-button";
 import { cn } from "@/lib/utils";
 
 const M = motion;
@@ -118,7 +119,10 @@ export function SidebarNav() {
         </div>
       </LayoutGroup>
 
-      <ThemeToggle className="mt-auto" />
+      <div className="mt-auto flex flex-col items-center gap-2">
+        <ThemeToggle />
+        <SignOutButton />
+      </div>
     </aside>
   );
 }
